@@ -11,7 +11,6 @@ Application::Application()
      isGeneratePressed(false),
      renderingSpeed(500)
 {
-    //projection = glm::ortho(0.f, (float)WINDOW_WIDTH, 0.f, (float)WINDOW_HEIGHT,-1.f, 1.f);
     projection = glm::ortho<float>(0.f, WINDOW_WIDTH, WINDOW_HEIGHT,0.f, -1.f, 1.f);
 
     glm::vec4 vp = glm::vec4(-50.f, -50.f, 0.f, 1.f);
