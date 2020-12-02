@@ -8,7 +8,8 @@ MazeGenerator::MazeGenerator(uint32_t mazeWidth, uint32_t mazeHeight)
 	size(16),
 	isInitialRenderCall(true),
 	start(true),
-	traversalIndex(0)
+	traversalIndex(0),
+	isAdjacencyMatrixSet(false)
 
 {
 	maze = new bool * [MAX_MAZE_HEIGHT];
@@ -22,6 +23,17 @@ MazeGenerator::MazeGenerator(uint32_t mazeWidth, uint32_t mazeHeight)
 		}
 	}
 
+	adjacencyMatrix = new uint32_t* [MAX_MAZE_WIDTH * MAX_MAZE_HEIGHT];
+	for (uint32_t i = 0; i < MAX_MAZE_WIDTH * MAX_MAZE_HEIGHT; i++)
+	{
+		adjacencyMatrix[i] = new uint32_t[MAX_MAZE_WIDTH * MAX_MAZE_HEIGHT];
+
+		for (uint32_t j = 0; j < MAX_MAZE_WIDTH * MAX_MAZE_HEIGHT; j++)
+		{
+			adjacencyMatrix[i][j] = false;
+		}
+	}
+
 }
 
 MazeGenerator::~MazeGenerator()
@@ -31,6 +43,13 @@ MazeGenerator::~MazeGenerator()
 		delete[] maze[i];
 	}
 	delete[] maze;
+
+	for (uint32_t i = 0; i < MAX_MAZE_WIDTH * MAX_MAZE_HEIGHT; i++)
+	{
+		delete adjacencyMatrix[i];
+
+	}
+	delete[] adjacencyMatrix;
 }
 
 void MazeGenerator::render(uint32_t shaderProgram, uint32_t speed)
@@ -39,15 +58,29 @@ void MazeGenerator::render(uint32_t shaderProgram, uint32_t speed)
 	
 	uint32_t vertexLength = 7;
 	uint32_t quadVertexLength = 4;
+	for (uint32_t i = 0; i < traversalOrder.size(); i++)
+	{
+		if (i + 1 < traversalOrder.size())
+		{
+
+			fillAdjacencyMatrix(traversalOrder[i], traversalOrder[i + 1]);
+		}
+	}
 
 	if (!isInitialRenderCall && traversalIndex < traversalOrder.size())
 	{	
 
 		Sleep(500/speed);
 
+		
 		std::vector<Vertex> currQuad = (Generator::generateQuad(traversalOrder[traversalIndex].location.s, traversalOrder[traversalIndex].location.t, glm::vec4(1.f, 0.f, 0.f, 1.f),size));
 		std::vector<Vertex> prevQuad = (Generator::generateQuad(traversalOrder[traversalIndex].location.s, traversalOrder[traversalIndex].location.t, glm::vec4(1.f, 1.f, 1.f, 1.f),size));
 		std::vector<Vertex> wallQuad = (Generator::generateQuad(traversalOrder[traversalIndex].location.s, traversalOrder[traversalIndex].location.t, glm::vec4(0.f, 0.f, 0.f, 1.f),size));
+
+		if (traversalIndex + 1 == traversalOrder.size())
+		{
+			currQuad = (Generator::generateQuad(traversalOrder[traversalIndex].location.s, traversalOrder[traversalIndex].location.t, glm::vec4(1.f, 1.f, 1.f, 1.f), size));
+		}
 
 		for (int k = 0; k < currQuad.size(); k++)
 		{
@@ -66,9 +99,9 @@ void MazeGenerator::render(uint32_t shaderProgram, uint32_t speed)
 			}
 
 			uint32_t currentLocation = (traversalOrder[traversalIndex].location.s * 2) * vertexLength * quadVertexLength * (mazeWidth) * 2 + (traversalOrder[traversalIndex].location.t * 2) * vertexLength * quadVertexLength + vertexLength * k + 3;
-
+			
 			if (currentLocation < vertice.size())
-			{
+			{	
 				vertice[currentLocation] = currQuad[k].color.r;
 				vertice[currentLocation + 1] = currQuad[k].color.g;
 				vertice[currentLocation + 2] = currQuad[k].color.b;
@@ -76,7 +109,6 @@ void MazeGenerator::render(uint32_t shaderProgram, uint32_t speed)
 			}
 
 			uint32_t noWallLocation = vertice.size() + 5;
-			bool isCompared = false;
 			//Determing the direction where there is no wall
 			if (!start)
 			{
@@ -125,8 +157,11 @@ void MazeGenerator::render(uint32_t shaderProgram, uint32_t speed)
 
 		start = false;
 		traversalIndex++;
+		if (traversalIndex + 1 == traversalOrder.size())
+		{
+			isAdjacencyMatrixSet = true;
+		}
 	}
-
 
 
 	static Renderer renderer(shaderProgram);
@@ -156,7 +191,7 @@ void MazeGenerator::render(uint32_t shaderProgram, uint32_t speed)
 		{
 			for (int j = 0; j < 2 * mazeWidth; j++)
 			{
-				std::vector<Vertex> quad = (Generator::generateQuad(20 + size * j, 20 + size * i, glm::vec4(0.f, 0.f, 0.f, 1.f),size));
+				std::vector<Vertex> quad = (Generator::generateQuad(20 + size * j + j, 20 + size * i + i, glm::vec4(0.f, 0.f, 0.f, 1.f),size));
 
 				for (int k = 0; k < quad.size(); k++)
 				{
@@ -296,6 +331,7 @@ void MazeGenerator::reset()
 	//resetting everything to generate new maze
 	nVisitedNodes = 0;
 	isInitialRenderCall = true;
+	isAdjacencyMatrixSet = false;
 	start = true;
 	traversalIndex = 0;
 	vertice.clear();
@@ -309,8 +345,63 @@ void MazeGenerator::reset()
 	for (uint32_t i = 0; i < MAX_MAZE_HEIGHT; i++)
 	{
 		for (uint32_t j = 0; j < MAX_MAZE_WIDTH; j++)
-		{
+		{	
+
 			maze[i][j] = false;
 		}
 	}
+
+	
+
+
+	for (uint32_t i = 0; i < MAX_MAZE_WIDTH * MAX_MAZE_HEIGHT; i++)
+	{
+		for (uint32_t j = 0; j < MAX_MAZE_WIDTH * MAX_MAZE_HEIGHT; j++)
+		{
+			adjacencyMatrix[i][j] = false;
+		}
+	}
+}
+
+
+void MazeGenerator::fillAdjacencyMatrix(Node firstNode, Node secondNode)
+{
+	adjacencyMatrix[firstNode.location.s * mazeWidth + firstNode.location.t]
+		[secondNode.location.s * mazeWidth + secondNode.location.t] = true;
+
+	adjacencyMatrix[secondNode.location.s * mazeWidth + secondNode.location.t]
+		[firstNode.location.s * mazeWidth + firstNode.location.t] = true;
+
+}
+
+uint32_t** MazeGenerator::getAdjacencyMatrix() const
+{	
+	isAdjacencyMatrixSet = false;
+
+	return adjacencyMatrix;
+}
+
+uint32_t MazeGenerator::getMazeWidth() const
+{
+	return mazeWidth;
+}
+
+uint32_t MazeGenerator::getMazeHeight() const
+{
+	return mazeHeight;
+}
+
+int MazeGenerator::isMatrixSet() const
+{
+	return isAdjacencyMatrixSet;
+}
+
+std::vector<float>& MazeGenerator::getVertices()
+{
+	return vertice;
+}
+
+size_t MazeGenerator::getQuadSize() const
+{
+	return size;
 }

@@ -154,6 +154,7 @@
     <ClCompile Include="external\Imgui\imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MazeGenerator.cpp" />
+    <ClCompile Include="MazeSolver.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Window.cpp" />
@@ -166,6 +167,7 @@
     <ClInclude Include="Application.h" />
     <ClInclude Include="Camera2D.h" />
     <ClInclude Include="Generator.h" />
+    <ClInclude Include="MazeSolver.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="MazeGenerator.h" />
     <ClInclude Include="Node.h" />

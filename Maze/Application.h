@@ -4,6 +4,7 @@
 #include "Window.h"
 #include "Camera2D.h"
 #include "MazeGenerator.h"
+#include "MazeSolver.h"
 
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
@@ -27,8 +28,16 @@ class Application
 		int32_t graphWidth;
 		int32_t graphHeight;
 		int32_t oldGraphHeight;
-		int32_t renderingSpeed; // controls the speed at which maze generated is rendered
+		int32_t generatorSpeed; // controls the speed at which maze generated is rendered
 		bool isGeneratePressed; 
+		bool isSolvePressed;
+		int32_t solverSpeed;
+
+		int32_t startNodeX;
+		int32_t startNodeY;
+
+		int32_t endNodeX;
+		int32_t endNodeY;
 
 	private:
 		void guiSetup();
